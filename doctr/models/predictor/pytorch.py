@@ -107,4 +107,4 @@ class OCRPredictor(nn.Module, _OCRPredictor):
                 for page in pages
             ]
         )
-        return out
+        return (out, boxes, text_preds)
