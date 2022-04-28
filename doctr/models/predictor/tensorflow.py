@@ -98,4 +98,4 @@ class OCRPredictor(NestedObject, _OCRPredictor):
                                                           origin_page_shapes)]
 
         out = self.doc_builder(boxes, text_preds, origin_page_shapes)  # type: ignore[misc]
-        return out
+        return (out, boxes, text_preds)
