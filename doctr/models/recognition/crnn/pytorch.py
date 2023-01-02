@@ -17,30 +17,34 @@ from ...classification import mobilenet_v3_large_r, mobilenet_v3_small_r, vgg16_
 from ...utils.pytorch import load_pretrained_params
 from ..core import RecognitionModel, RecognitionPostProcessor
 
-__all__ = ['CRNN', 'crnn_vgg16_bn', 'crnn_mobilenet_v3_small',
-           'crnn_mobilenet_v3_large']
+__all__ = [
+    "CRNN",
+    "crnn_vgg16_bn",
+    "crnn_mobilenet_v3_small",
+    "crnn_mobilenet_v3_large",
+]
 
 default_cfgs: Dict[str, Dict[str, Any]] = {
-    'crnn_vgg16_bn': {
-        'mean': (0.694, 0.695, 0.693),
-        'std': (0.299, 0.296, 0.301),
-        'input_shape': (3, 32, 128),
-        'vocab': VOCABS['legacy_french'],
-        'url': 'https://github.com/mindee/doctr/releases/download/v0.3.1/crnn_vgg16_bn-9762b0b0.pt',
+    "crnn_vgg16_bn": {
+        "mean": (0.694, 0.695, 0.693),
+        "std": (0.299, 0.296, 0.301),
+        "input_shape": (3, 32, 128),
+        "vocab": VOCABS["legacy_french"],
+        "url": "/tmp/.cache/doctr/crnn_vgg16_bn-9762b0b0.pt",
     },
-    'crnn_mobilenet_v3_small': {
-        'mean': (0.694, 0.695, 0.693),
-        'std': (0.299, 0.296, 0.301),
-        'input_shape': (3, 32, 128),
-        'vocab': VOCABS['french'],
-        'url': "https://github.com/mindee/doctr/releases/download/v0.3.1/crnn_mobilenet_v3_small_pt-3b919a02.pt",
+    "crnn_mobilenet_v3_small": {
+        "mean": (0.694, 0.695, 0.693),
+        "std": (0.299, 0.296, 0.301),
+        "input_shape": (3, 32, 128),
+        "vocab": VOCABS["french"],
+        "url": "https://github.com/mindee/doctr/releases/download/v0.3.1/crnn_mobilenet_v3_small_pt-3b919a02.pt",
     },
-    'crnn_mobilenet_v3_large': {
-        'mean': (0.694, 0.695, 0.693),
-        'std': (0.299, 0.296, 0.301),
-        'input_shape': (3, 32, 128),
-        'vocab': VOCABS['french'],
-        'url': "https://github.com/mindee/doctr/releases/download/v0.3.1/crnn_mobilenet_v3_large_pt-f5259ec2.pt",
+    "crnn_mobilenet_v3_large": {
+        "mean": (0.694, 0.695, 0.693),
+        "std": (0.299, 0.296, 0.301),
+        "input_shape": (3, 32, 128),
+        "vocab": VOCABS["french"],
+        "url": "https://github.com/mindee/doctr/releases/download/v0.3.1/crnn_mobilenet_v3_large_pt-f5259ec2.pt",
     },
 }
 
@@ -52,9 +56,12 @@ class CTCPostProcessor(RecognitionPostProcessor):
     Args:
         vocab: string containing the ordered sequence of supported characters
     """
+
     @staticmethod
     def ctc_best_path(
-        logits: torch.Tensor, vocab: str = VOCABS['french'], blank: int = 0,
+        logits: torch.Tensor,
+        vocab: str = VOCABS["french"],
+        blank: int = 0,
     ) -> List[Tuple[str, float]]:
         """Implements best path decoding as shown by Graves (Dissertation, p63), highly inspired from
         <https://github.com/githubharald/CTCDecoder>`_.
@@ -80,8 +87,7 @@ class CTCPostProcessor(RecognitionPostProcessor):
         return list(zip(words, probs.tolist()))
 
     def __call__(  # type: ignore[override]
-        self,
-        logits: torch.Tensor
+        self, logits: torch.Tensor
     ) -> List[Tuple[str, float]]:
         """
         Performs decoding of raw output with CTC and decoding of CTC predictions
@@ -95,7 +101,9 @@ class CTCPostProcessor(RecognitionPostProcessor):
 
         """
         # Decode CTC
-        return self.ctc_best_path(logits=logits, vocab=self.vocab, blank=len(self.vocab))
+        return self.ctc_best_path(
+            logits=logits, vocab=self.vocab, blank=len(self.vocab)
+        )
 
 
 class CRNN(RecognitionModel, nn.Module):
@@ -109,7 +117,12 @@ class CRNN(RecognitionModel, nn.Module):
         cfg: configuration dictionary
     """
 
-    _children_names: List[str] = ['feat_extractor', 'decoder', 'linear', 'postprocessor']
+    _children_names: List[str] = [
+        "feat_extractor",
+        "decoder",
+        "linear",
+        "postprocessor",
+    ]
 
     def __init__(
         self,
@@ -134,7 +147,11 @@ class CRNN(RecognitionModel, nn.Module):
         self.feat_extractor.train()
 
         self.decoder = nn.LSTM(
-            input_size=lstm_in, hidden_size=rnn_units, batch_first=True, num_layers=2, bidirectional=True,
+            input_size=lstm_in,
+            hidden_size=rnn_units,
+            batch_first=True,
+            num_layers=2,
+            bidirectional=True,
         )
 
         # features units = 2 * rnn_units because bidirectional layers
@@ -144,10 +161,12 @@ class CRNN(RecognitionModel, nn.Module):
 
         for n, m in self.named_modules():
             # Don't override the initialization of the backbone
-            if n.startswith('feat_extractor.'):
+            if n.startswith("feat_extractor."):
                 continue
             if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight.data, mode='fan_out', nonlinearity='relu')
+                nn.init.kaiming_normal_(
+                    m.weight.data, mode="fan_out", nonlinearity="relu"
+                )
                 if m.bias is not None:
                     m.bias.data.zero_()
             elif isinstance(m, nn.BatchNorm2d):
@@ -171,7 +190,9 @@ class CRNN(RecognitionModel, nn.Module):
         """
         gt, seq_len = self.build_target(target)
         batch_len = model_output.shape[0]
-        input_length = model_output.shape[1] * torch.ones(size=(batch_len,), dtype=torch.int32)
+        input_length = model_output.shape[1] * torch.ones(
+            size=(batch_len,), dtype=torch.int32
+        )
         # N x T x C -> T x N x C
         logits = model_output.permute(1, 0, 2)
         probs = F.log_softmax(logits, dim=-1)
@@ -211,7 +232,7 @@ class CRNN(RecognitionModel, nn.Module):
             out["preds"] = self.postprocessor(logits)
 
         if target is not None:
-            out['loss'] = self.compute_loss(logits, target)
+            out["loss"] = self.compute_loss(logits, target)
 
         return out
 
@@ -229,23 +250,25 @@ def _crnn(
     # Feature extractor
     feat_extractor = backbone_fn(pretrained=pretrained_backbone).features  # type: ignore[call-arg]
 
-    kwargs['vocab'] = kwargs.get('vocab', default_cfgs[arch]['vocab'])
-    kwargs['input_shape'] = kwargs.get('input_shape', default_cfgs[arch]['input_shape'])
+    kwargs["vocab"] = kwargs.get("vocab", default_cfgs[arch]["vocab"])
+    kwargs["input_shape"] = kwargs.get("input_shape", default_cfgs[arch]["input_shape"])
 
     _cfg = deepcopy(default_cfgs[arch])
-    _cfg['vocab'] = kwargs['vocab']
-    _cfg['input_shape'] = kwargs['input_shape']
+    _cfg["vocab"] = kwargs["vocab"]
+    _cfg["input_shape"] = kwargs["input_shape"]
 
     # Build the model
     model = CRNN(feat_extractor, cfg=_cfg, **kwargs)  # type: ignore[arg-type]
     # Load pretrained parameters
     if pretrained:
-        if _cfg['vocab'] != default_cfgs[arch]['vocab']:
+        if _cfg["vocab"] != default_cfgs[arch]["vocab"]:
             # The number of classes is not the same as the number of classes in the pretrained model =>
             # remove the last layer weights
-            load_pretrained_params(model, _cfg['url'], pop_entrys=['linear.weight', 'linear.bias'])
+            load_pretrained_params(
+                model, _cfg["url"], pop_entrys=["linear.weight", "linear.bias"]
+            )
         else:
-            load_pretrained_params(model, _cfg['url'])
+            load_pretrained_params(model, _cfg["url"])
 
     return model
 
@@ -267,7 +290,7 @@ def crnn_vgg16_bn(pretrained: bool = False, **kwargs: Any) -> CRNN:
         text recognition architecture
     """
 
-    return _crnn('crnn_vgg16_bn', pretrained, vgg16_bn_r, **kwargs)
+    return _crnn("crnn_vgg16_bn", pretrained, vgg16_bn_r, **kwargs)
 
 
 def crnn_mobilenet_v3_small(pretrained: bool = False, **kwargs: Any) -> CRNN:
@@ -287,7 +310,7 @@ def crnn_mobilenet_v3_small(pretrained: bool = False, **kwargs: Any) -> CRNN:
         text recognition architecture
     """
 
-    return _crnn('crnn_mobilenet_v3_small', pretrained, mobilenet_v3_small_r, **kwargs)
+    return _crnn("crnn_mobilenet_v3_small", pretrained, mobilenet_v3_small_r, **kwargs)
 
 
 def crnn_mobilenet_v3_large(pretrained: bool = False, **kwargs: Any) -> CRNN:
@@ -307,4 +330,4 @@ def crnn_mobilenet_v3_large(pretrained: bool = False, **kwargs: Any) -> CRNN:
         text recognition architecture
     """
 
-    return _crnn('crnn_mobilenet_v3_large', pretrained, mobilenet_v3_large_r, **kwargs)
+    return _crnn("crnn_mobilenet_v3_large", pretrained, mobilenet_v3_large_r, **kwargs)

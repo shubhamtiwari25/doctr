@@ -8,10 +8,12 @@ import multiprocessing as mp
 from multiprocessing.pool import ThreadPool
 from typing import Any, Callable, Iterable, Optional
 
-__all__ = ['multithread_exec']
+__all__ = ["multithread_exec"]
 
 
-def multithread_exec(func: Callable[[Any], Any], seq: Iterable[Any], threads: Optional[int] = None) -> Iterable[Any]:
+def multithread_exec(
+    func: Callable[[Any], Any], seq: Iterable[Any], threads: Optional[int] = None
+) -> Iterable[Any]:
     """Execute a given function in parallel for each element of a given sequence
 
     >>> from doctr.utils.multithreading import multithread_exec
@@ -27,12 +29,13 @@ def multithread_exec(func: Callable[[Any], Any], seq: Iterable[Any], threads: Op
         iterable of the function's results using the iterable as inputs
     """
 
-    threads = threads if isinstance(threads, int) else min(16, mp.cpu_count())
+    # threads = threads if isinstance(threads, int) else min(16, mp.cpu_count())
     # Single-thread
-    if threads < 2:
-        results = map(func, seq)
-    # Multi-threading
-    else:
-        with ThreadPool(threads) as tp:
-            results = tp.map(func, seq)  # type: ignore[assignment]
+    results = map(func, seq)
+    # if threads < 2:
+    #    results = map(func, seq)
+    ## Multi-threading
+    # else:
+    #    with ThreadPool(threads) as tp:
+    #        results = tp.map(func, seq)  # type: ignore[assignment]
     return results

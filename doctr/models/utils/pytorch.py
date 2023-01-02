@@ -11,7 +11,11 @@ from torch import nn
 
 from doctr.utils.data import download_from_url
 
-__all__ = ['load_pretrained_params', 'conv_sequence_pt', 'export_classification_model_to_onnx']
+__all__ = [
+    "load_pretrained_params",
+    "conv_sequence_pt",
+    "export_classification_model_to_onnx",
+]
 
 
 def load_pretrained_params(
@@ -38,10 +42,12 @@ def load_pretrained_params(
     if url is None:
         logging.warning("Invalid model URL, using default initialization.")
     else:
-        archive_path = download_from_url(url, hash_prefix=hash_prefix, cache_subdir='models', **kwargs)
-
+        # archive_path = download_from_url(
+        #    url, hash_prefix=hash_prefix, cache_subdir="models", **kwargs
+        # )
+        archive_path = url
         # Read state_dict
-        state_dict = torch.load(archive_path, map_location='cpu')
+        state_dict = torch.load(archive_path, map_location="cpu")
 
         # Remove weights from the state_dict
         if pop_entrys is not None:
@@ -74,11 +80,9 @@ def conv_sequence_pt(
         list of layers
     """
     # No bias before Batch norm
-    kwargs['bias'] = kwargs.get('bias', not(bn))
+    kwargs["bias"] = kwargs.get("bias", not (bn))
     # Add activation directly to the conv if there is no BN
-    conv_seq: List[nn.Module] = [
-        nn.Conv2d(in_channels, out_channels, **kwargs)
-    ]
+    conv_seq: List[nn.Module] = [nn.Conv2d(in_channels, out_channels, **kwargs)]
 
     if bn:
         conv_seq.append(nn.BatchNorm2d(out_channels))
@@ -89,7 +93,9 @@ def conv_sequence_pt(
     return conv_seq
 
 
-def export_classification_model_to_onnx(model: nn.Module, exp_name: str, dummy_input: torch.Tensor) -> str:
+def export_classification_model_to_onnx(
+    model: nn.Module, exp_name: str, dummy_input: torch.Tensor
+) -> str:
     """Export classification model to ONNX format.
 
     >>> import torch
@@ -110,10 +116,12 @@ def export_classification_model_to_onnx(model: nn.Module, exp_name: str, dummy_i
         model,
         dummy_input,
         f"{exp_name}.onnx",
-        input_names=['input'],
-        output_names=['logits'],
-        dynamic_axes={'input': {0: 'batch_size'}, 'logits': {0: 'batch_size'}},
-        export_params=True, opset_version=13, verbose=False
+        input_names=["input"],
+        output_names=["logits"],
+        dynamic_axes={"input": {0: "batch_size"}, "logits": {0: "batch_size"}},
+        export_params=True,
+        opset_version=13,
+        verbose=False,
     )
     logging.info(f"Model exported to {exp_name}.onnx")
     return f"{exp_name}.onnx"
