@@ -37,6 +37,7 @@ else:
     logging.info("Disabling PyTorch because USE_TF is set")
     _torch_available = False
 
+_torch_available = True
 
 if USE_TF in ENV_VARS_TRUE_AND_AUTO_VALUES and USE_TORCH not in ENV_VARS_TRUE_VALUES:
     _tf_available = importlib.util.find_spec("tensorflow") is not None
@@ -78,6 +79,7 @@ if not _torch_available and not _tf_available:
 
 
 def is_torch_available():
+    _torch_available = True
     return _torch_available
 
 

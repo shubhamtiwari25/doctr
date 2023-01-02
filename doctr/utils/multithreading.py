@@ -31,7 +31,7 @@ def multithread_exec(
 
     # threads = threads if isinstance(threads, int) else min(16, mp.cpu_count())
     # Single-thread
-    results = map(func, seq)
+    results = list(map(func, seq))
     # if threads < 2:
     #    results = map(func, seq)
     ## Multi-threading
