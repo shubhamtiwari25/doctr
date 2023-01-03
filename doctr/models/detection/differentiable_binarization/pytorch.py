@@ -31,7 +31,7 @@ default_cfgs: Dict[str, Dict[str, Any]] = {
         "input_shape": (3, 1024, 1024),
         "mean": (0.798, 0.785, 0.772),
         "std": (0.264, 0.2749, 0.287),
-        "url": "/tmp/.cache/doctr/db_resnet50-ac60cadc.pt",
+        "url": "/var/task/tmp/.cache/doctr/db_resnet50-ac60cadc.pt",
     },
     "db_resnet34": {
         "input_shape": (3, 1024, 1024),

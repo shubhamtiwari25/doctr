@@ -30,7 +30,7 @@ default_cfgs: Dict[str, Dict[str, Any]] = {
         "std": (0.299, 0.296, 0.301),
         "input_shape": (3, 32, 128),
         "vocab": VOCABS["legacy_french"],
-        "url": "/tmp/.cache/doctr/crnn_vgg16_bn-9762b0b0.pt",
+        "url": "/var/task/tmp/.cache/doctr/crnn_vgg16_bn-9762b0b0.pt",
     },
     "crnn_mobilenet_v3_small": {
         "mean": (0.694, 0.695, 0.693),
